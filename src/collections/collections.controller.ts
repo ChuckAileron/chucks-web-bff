@@ -26,6 +26,16 @@ export class CollectionsController {
     return this.collectionsService.reorder(body.ids);
   }
 
+  @Post('import')
+  importCollection(@Body() body: { payload: Record<string, unknown> }) {
+    return this.collectionsService.importCollection(body.payload);
+  }
+
+  @Get(':id/export')
+  exportCollection(@Param('id', ParseIntPipe) id: number) {
+    return this.collectionsService.exportCollection(id);
+  }
+
   @Get(':id')
   get(@Param('id', ParseIntPipe) id: number) {
     return this.collectionsService.get(id);

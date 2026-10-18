@@ -63,4 +63,14 @@ export class CollectionsService extends BackendProxyService {
       this.http.delete(`${this.baseUrl}/items/${itemId}`),
     );
   }
+
+  exportCollection(id: number) {
+    return this.forward(() => this.http.get(`${this.baseUrl}/${id}/export`));
+  }
+
+  importCollection(payload: Record<string, unknown>) {
+    return this.forward(() =>
+      this.http.post(`${this.baseUrl}/import`, { payload }),
+    );
+  }
 }
