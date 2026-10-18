@@ -1,0 +1,18 @@
+# compiled
+dist
+build
+
+# dependencies
+node_modules
+
+# environment
+.env
+.env.local
+
+# logs
+*.log
+npm-debug.log*
+
+# misc
+.DS_Store
+coverage
