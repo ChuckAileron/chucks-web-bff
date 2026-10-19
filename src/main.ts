@@ -7,9 +7,18 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const defaultOrigins = ['http://localhost:5177', 'http://127.0.0.1:5177'];
+  const normalizeOrigin = (origin: string): string => {
+    const cleaned = origin
+      .trim()
+      .replace(/^["']|["']$/g, '')
+      .replace(/\/+$/, '');
+    if (cleaned === '') return '';
+    if (/^https?:\/\//i.test(cleaned)) return cleaned;
+    return `https://${cleaned}`;
+  };
   const envOrigins = (process.env['FRONTEND_URL'] ?? '')
     .split(',')
-    .map((origin) => origin.trim().replace(/\/+$/, ''))
+    .map(normalizeOrigin)
     .filter((origin) => origin.length > 0);
   const origins = envOrigins.length > 0 ? envOrigins : defaultOrigins;
 
