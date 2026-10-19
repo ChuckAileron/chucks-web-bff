@@ -1,124 +1,126 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# CHUCK's Web — BFF
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+![NestJS](https://img.shields.io/badge/NestJS-12-E0234E?logo=nestjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white)
+![Vitest](https://img.shields.io/badge/testing-Vitest-6E9F18?logo=vitest&logoColor=white)
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Backend For Frontend (BFF) de **CHUCK's Web**: una capa de proxy delgada y *stateless* en NestJS que agrupa y enruta las llamadas del frontend hacia el backend real. El frontend habla **solo** con este servicio; el BFF reenvía cada petición al backend en `BACKEND_URL` (mismo path) y devuelve la respuesta tal cual.
 
-## Description
+> **Arquitectura:** [`chucks-web-frontend`](../chucks-web-frontend) (`:5177`) → **este repo** (`:3000`) → [`chucks-web-backend`](../chucks-web-backend) (`:3001` + PostgreSQL)
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Arquitectura
 
-## Project setup
-
-```bash
-$ npm install
+```
+Controller (rutas) → Service (HttpModule) → BackendProxyService.forward() → Backend
 ```
 
-## Compile and run the project
+- **`src/common/backend-proxy.service.ts`** — clase base compartida: resuelve `BACKEND_URL` desde `ConfigService`, envuelve el Observable de Axios con `firstValueFrom` y devuelve solo `response.data`.
+- **Errores transparentes:** si el backend responde, se relanza `HttpException(data, status)`; si no responde → `BadGatewayException('Backend unavailable')`.
+- **`ValidationPipe({ whitelist: true, transform: true })`** global y `ParseIntPipe` en params numéricos. La validación real de payloads la hace el backend (aún no hay DTOs propios).
+- **Sin base de datos, sin autenticación, sin estado:** cada arranque arranca limpio.
+
+### Timeouts por módulo
+
+| Timeout | Módulos |
+|---|---|
+| 5 s | tasks, collections, wiki |
+| 10 s | accounts, hijitos, weight |
+| 30 s | calendar |
+| 60 s | wishlist, launchbox, shopping, images (operaciones con scraping) |
+
+## Stack
+
+| Área | Tecnología |
+|---|---|
+| Framework | NestJS 12 (ESM, `"type": "module"`) |
+| HTTP saliente | `@nestjs/axios` + Axios |
+| Config | `@nestjs/config` (`ConfigService`) |
+| Validación | `class-validator` + `class-transformer` (preparados para DTOs) |
+| Tests | **Vitest** + Supertest (no Jest) |
+| Lint / Format | Oxlint (`--type-aware`) + Prettier |
+
+## Requisitos
+
+- El [`chucks-web-backend`](../chucks-web-backend) levantado (por defecto en `http://localhost:3001`).
+
+## Puesta en marcha
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm install
+cp .env.example .env   # y ajusta BACKEND_URL/PORT si hace falta
+npm run start:dev
 ```
 
-## Run tests
+El BFF queda en **http://localhost:3000** (log: `BFF running on http://localhost:3000`).
 
-```bash
-# unit tests
-$ npm run test
+## Variables de entorno
 
-# e2e tests
-$ npm run test:e2e
+| Variable | Default | Descripción |
+|---|---|---|
+| `BACKEND_URL` | `http://localhost:3001` | URL base del backend — `src/common/backend-proxy.service.ts` |
+| `PORT` | `3000` | Puerto HTTP del BFF — `src/main.ts` |
 
-# test coverage
-$ npm run test:cov
+Ver `.env.example`. `dotenv/config` se carga al arrancar.
+
+## Scripts
+
+| Script | Descripción |
+|---|---|
+| `npm run start:dev` | Desarrollo con watch |
+| `npm run start:debug` | Debug (`--inspect-brk` + watch) |
+| `npm run start` / `start:prod` | Arranque simple / producción (`node dist/main`) |
+| `npm run build` | `nest build` |
+| `npm run lint` | Oxlint type-aware sobre `src/` y `test/` |
+| `npm run format` | Prettier |
+| `npm test` / `test:watch` / `test:cov` | Vitest (unitarios) |
+| `npm run test:e2e` | E2E con `vitest.config.e2e.ts` |
+| `npm run deploy` | Deploy vía `@nestjs/mau` |
+
+## Endpoints
+
+~66 endpoints: `GET /health` más un bloque por módulo que replica el path del backend.
+
+| Módulo | Rutas |
+|---|---|
+| **App** | `GET /health` → `{ status: 'ok', service: 'chucks-web-bff' }` |
+| **tasks** | `GET/POST /tasks`, `GET/PATCH/DELETE /tasks/:id` |
+| **collections** | `GET/POST /collections`, `GET/PATCH/DELETE /collections/:id`, `PUT /collections/reorder`, `POST /collections/import`, `GET /collections/:id/export`, `GET/POST /collections/:id/items`, `PATCH/DELETE /collections/items/:itemId` |
+| **wishlist** | `GET/POST /wishlist`, `POST /wishlist/refresh`, `POST /wishlist/:id/prices`, `POST /wishlist/prices/:priceId/refresh`, `DELETE /wishlist/prices/:priceId`, `PATCH/DELETE /wishlist/:id` |
+| **launchbox** | `POST /launchbox/single`, `/apply-one`, `/csv/parse`, `/match-rows`, `/bulk`, `/apply-bulk`, `/apply-results-csv`, `GET /launchbox/bulk/:jobId`, `/bulk/:jobId/results`, `POST /launchbox/bulk/:jobId/cancel` |
+| **images** | `POST /images/search` |
+| **wiki** | `GET/POST /wiki/pages`, `GET/PATCH/DELETE /wiki/pages/:id`, `GET /wiki/categories`, `POST /wiki/categories/banner`, `GET /wiki/stats` |
+| **shopping** | `GET/POST /shopping/contexts`, `DELETE /shopping/contexts/:id`, `GET /shopping/contexts/:id/items`, `POST /shopping/contexts/:id/links`, `POST /shopping/contexts/:id/refresh`, `DELETE /shopping/contexts/:id/inactive` |
+| **hijitos** | `GET /hijitos`, `GET/PUT /hijitos/banner`, `PATCH /hijitos/tracks/:slug`, `POST /hijitos/tasks`, `PATCH/DELETE /hijitos/tasks/:id`, `POST /hijitos/tasks/:id/subtasks`, `PATCH/DELETE /hijitos/subtasks/:id` |
+| **accounts** | `GET/POST /accounts`, `PUT /accounts/reorder`, `GET/PATCH/DELETE /accounts/:id`, `GET /accounts/:id/registers`, `GET /accounts/:id/years`, `GET /accounts/:id/monthly`, `POST /accounts/registers`, `PATCH/DELETE /accounts/registers/:id` |
+| **calendar** | `GET /calendar/colors`, `GET /calendar/events`, `POST /calendar/events`, `PATCH/DELETE /calendar/events/:id`, `POST /calendar/holidays/:year/refresh` |
+| **weight** | `GET /weight`, `PUT /weight/target`, `POST /weight/entries`, `DELETE /weight/entries/:date` |
+
+## CORS
+
+Habilitado solo para el frontend en desarrollo:
+
+```ts
+['http://localhost:5177', 'http://127.0.0.1:5177']
 ```
 
-## Deployment
+## Estructura
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+```
+src/
+├── main.ts                       # Bootstrap: dotenv, CORS, ValidationPipe, PORT
+├── app.module.ts                 # Registro de los 11 módulos
+├── app.controller.ts             # GET /health
+├── common/
+│   └── backend-proxy.service.ts  # Clase base del proxy (forward, errores)
+└── <modulo>/
+    ├── <modulo>.module.ts
+    ├── <modulo>.controller.ts    # Rutas
+    └── <modulo>.service.ts       # Llamada HTTP al backend
+test/                             # E2E (supertest contra /health)
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## Notas
 
-## Observability
-
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
-
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
-
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
-
-To add it to this project:
-
-```bash
-$ npm install @nestjs/observe
-```
-
-Then follow the [setup guide](https://docs.nestjs.com/observability/overview) - it takes a single import and an app key.
-
-The free plan needs no payment details and covers 300,000 events a month. You can also browse the [live demo](https://www.observe-demo.nestjs.com/dashboard) first - the whole dashboard over a busy service's data, with nothing to install.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observe](https://observe.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- El BFF **no consume APIs externas**: búsquedas de imágenes, scraping de precios y festivos los resuelve el backend.
+- Sin autenticación: la seguridad/usuarios, si se añade, vivirá en el backend.
+- Los módulos `tasks`, `wishlist` y `app` tienen tests unitarios que mockean `HttpService` y `ConfigService`.
