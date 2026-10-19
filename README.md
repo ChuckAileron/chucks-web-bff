@@ -66,7 +66,7 @@ Ver `.env.example`. `dotenv/config` se carga al arrancar.
 
 | Script | Descripción |
 |---|---|
-| `npm run start:dev` | Desarrollo con watch |
+| `npm run dev` / `npm run start:dev` | Desarrollo con watch |
 | `npm run start:debug` | Debug (`--inspect-brk` + watch) |
 | `npm run start` / `start:prod` | Arranque simple / producción (`node dist/main`) |
 | `npm run build` | `nest build` |
