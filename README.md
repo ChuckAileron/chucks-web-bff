@@ -17,7 +17,7 @@ Controller (rutas) → Service (HttpModule) → BackendProxyService.forward() �
 - **`src/common/backend-proxy.service.ts`** — clase base compartida: resuelve `BACKEND_URL` desde `ConfigService`, envuelve el Observable de Axios con `firstValueFrom` y devuelve solo `response.data`.
 - **Errores transparentes:** si el backend responde, se relanza `HttpException(data, status)`; si no responde → `BadGatewayException('Backend unavailable')`.
 - **`ValidationPipe({ whitelist: true, transform: true })`** global y `ParseIntPipe` en params numéricos. La validación real de payloads la hace el backend (aún no hay DTOs propios).
-- **Sin base de datos, sin autenticación, sin estado:** cada arranque arranca limpio.
+- **Sin base de datos ni estado de sesión:** la autenticación se valida contra el backend y el BFF conserva los tokens solo durante cada solicitud.
 
 ### Timeouts por módulo
 
@@ -58,6 +58,7 @@ El BFF queda en **http://localhost:3000** (log: `BFF running on http://localhost
 | Variable | Default | Descripción |
 |---|---|---|
 | `BACKEND_URL` | `http://localhost:3001` | URL base del backend — `src/common/backend-proxy.service.ts` |
+| `INTERNAL_API_KEY` | — | Obligatoria para las rutas de datos; debe coincidir con la clave del backend. Protege el salto interno después de validar la sesión del usuario |
 | `PORT` | `3000` | Puerto HTTP del BFF — `src/main.ts` |
 
 Ver `.env.example`. `dotenv/config` se carga al arrancar.
@@ -78,7 +79,7 @@ Ver `.env.example`. `dotenv/config` se carga al arrancar.
 
 ## Endpoints
 
-~66 endpoints: `GET /health` más un bloque por módulo que replica el path del backend.
+~73 endpoints: `GET /health` más un bloque por módulo que replica el path del backend.
 
 | Módulo | Rutas |
 |---|---|
@@ -90,6 +91,7 @@ Ver `.env.example`. `dotenv/config` se carga al arrancar.
 | **images** | `POST /images/search` |
 | **wiki** | `GET/POST /wiki/pages`, `GET/PATCH/DELETE /wiki/pages/:id`, `GET /wiki/categories`, `POST /wiki/categories/banner`, `GET /wiki/stats` |
 | **shopping** | `GET/POST /shopping/contexts`, `DELETE /shopping/contexts/:id`, `GET /shopping/contexts/:id/items`, `POST /shopping/contexts/:id/links`, `POST /shopping/contexts/:id/refresh`, `DELETE /shopping/contexts/:id/inactive` |
+| **sites** | `GET/POST /sites/contexts`, `DELETE /sites/contexts/:id`, `GET/POST /sites/contexts/:id/pages`, `POST /sites/pages/:id/capture`, `DELETE /sites/pages/:id` |
 | **hijitos** | `GET /hijitos`, `GET/PUT /hijitos/banner`, `PATCH /hijitos/tracks/:slug`, `POST /hijitos/tasks`, `PATCH/DELETE /hijitos/tasks/:id`, `POST /hijitos/tasks/:id/subtasks`, `PATCH/DELETE /hijitos/subtasks/:id` |
 | **accounts** | `GET/POST /accounts`, `PUT /accounts/reorder`, `GET/PATCH/DELETE /accounts/:id`, `GET /accounts/:id/registers`, `GET /accounts/:id/years`, `GET /accounts/:id/monthly`, `POST /accounts/registers`, `PATCH/DELETE /accounts/registers/:id` |
 | **calendar** | `GET /calendar/colors`, `GET /calendar/events`, `POST /calendar/events`, `PATCH/DELETE /calendar/events/:id`, `POST /calendar/holidays/:year/refresh` |
@@ -108,7 +110,7 @@ Habilitado solo para el frontend en desarrollo:
 ```
 src/
 ├── main.ts                       # Bootstrap: dotenv, CORS, ValidationPipe, PORT
-├── app.module.ts                 # Registro de los 11 módulos
+├── app.module.ts                 # Registro de los módulos del BFF
 ├── app.controller.ts             # GET /health
 ├── common/
 │   └── backend-proxy.service.ts  # Clase base del proxy (forward, errores)
@@ -122,5 +124,5 @@ test/                             # E2E (supertest contra /health)
 ## Notas
 
 - El BFF **no consume APIs externas**: búsquedas de imágenes, scraping de precios y festivos los resuelve el backend.
-- Sin autenticación: la seguridad/usuarios, si se añade, vivirá en el backend.
+- `POST /auth/register` y `POST /auth/login` reenvían el registro único y el inicio de sesión al backend. El resto de rutas exige un Bearer token válido, comprobado mediante `GET /auth/me`.
 - Los módulos `tasks`, `wishlist` y `app` tienen tests unitarios que mockean `HttpService` y `ConfigService`.

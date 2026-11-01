@@ -20,6 +20,11 @@ export class BackendProxyService {
       'BACKEND_URL',
       'http://localhost:3001',
     );
+    const internalApiKey = config.get<string>('INTERNAL_API_KEY');
+    const axiosCommonHeaders = this.http.axiosRef?.defaults?.headers?.common;
+    if (internalApiKey && axiosCommonHeaders) {
+      axiosCommonHeaders['x-internal-api-key'] = internalApiKey;
+    }
   }
 
   protected async forward<T>(

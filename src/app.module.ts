@@ -12,9 +12,12 @@ import { HijitosModule } from './hijitos/hijitos.module.js';
 import { AccountsModule } from './accounts/accounts.module.js';
 import { CalendarModule } from './calendar/calendar.module.js';
 import { WeightModule } from './weight/weight.module.js';
+import { AuthModule } from './auth/auth.module.js';
+import { SitesModule } from './sites/sites.module.js';
 
 @Module({
   imports: [
+    AuthModule,
     TasksModule,
     CollectionsModule,
     WishlistModule,
@@ -22,6 +25,7 @@ import { WeightModule } from './weight/weight.module.js';
     ImagesModule,
     WikiModule,
     ShoppingModule,
+    SitesModule,
     HijitosModule,
     AccountsModule,
     CalendarModule,
