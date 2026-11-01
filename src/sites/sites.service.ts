@@ -15,6 +15,7 @@ export class SitesService extends BackendProxyService {
   listContexts() { return this.forward(() => this.http.get(`${this.baseUrl}/contexts`)); }
   createContext(body: Record<string, unknown>) { return this.forward(() => this.http.post(`${this.baseUrl}/contexts`, body)); }
   deleteContext(id: number) { return this.forward(() => this.http.delete(`${this.baseUrl}/contexts/${id}`)); }
+  updateContext(id: number, body: Record<string, unknown>) { return this.forward(() => this.http.patch(`${this.baseUrl}/contexts/${id}`, body)); }
   listPages(id: number) { return this.forward(() => this.http.get(`${this.baseUrl}/contexts/${id}/pages`)); }
   addPage(id: number, body: Record<string, unknown>) { return this.forward(() => this.http.post(`${this.baseUrl}/contexts/${id}/pages`, body)); }
   recapturePage(id: number) { return this.forward(() => this.http.post(`${this.baseUrl}/pages/${id}/capture`)); }
