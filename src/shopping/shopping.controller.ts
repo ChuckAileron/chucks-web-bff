@@ -39,11 +39,11 @@ export class ShoppingController {
   ) { return this.shopping.deleteItem(contextId, itemId); }
 
   @Patch('contexts/:contextId/items/:itemId')
-  updateItemTags(
+  updateItem(
     @Param('contextId', ParseIntPipe) contextId: number,
     @Param('itemId', ParseIntPipe) itemId: number,
     @Body() body: Record<string, unknown>,
-  ) { return this.shopping.updateItemTags(contextId, itemId, body); }
+  ) { return this.shopping.updateItem(contextId, itemId, body); }
 
   @Post('contexts/:id/links')
   addLinks(@Param('id', ParseIntPipe) id: number, @Body() body: Record<string, unknown>) {
