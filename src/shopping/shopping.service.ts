@@ -32,6 +32,10 @@ export class ShoppingService extends BackendProxyService {
     return this.forward(() => this.http.get(`${this.baseUrl}/contexts/${id}/items`, { params: { sort } }));
   }
 
+  deleteItem(contextId: number, itemId: number) {
+    return this.forward(() => this.http.delete(`${this.baseUrl}/contexts/${contextId}/items/${itemId}`));
+  }
+
   addLinks(id: number, body: Record<string, unknown>) {
     return this.forward(() => this.http.post(`${this.baseUrl}/contexts/${id}/links`, body));
   }

@@ -32,6 +32,12 @@ export class ShoppingController {
     return this.shopping.listItems(id, sort);
   }
 
+  @Delete('contexts/:contextId/items/:itemId')
+  deleteItem(
+    @Param('contextId', ParseIntPipe) contextId: number,
+    @Param('itemId', ParseIntPipe) itemId: number,
+  ) { return this.shopping.deleteItem(contextId, itemId); }
+
   @Post('contexts/:id/links')
   addLinks(@Param('id', ParseIntPipe) id: number, @Body() body: Record<string, unknown>) {
     return this.shopping.addLinks(id, body);

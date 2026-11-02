@@ -79,7 +79,7 @@ Ver `.env.example`. `dotenv/config` se carga al arrancar.
 
 ## Endpoints
 
-~75 endpoints: `GET /health` más un bloque por módulo que replica el path del backend.
+~76 endpoints: `GET /health` más un bloque por módulo que replica el path del backend.
 
 | Módulo | Rutas |
 |---|---|
@@ -90,7 +90,7 @@ Ver `.env.example`. `dotenv/config` se carga al arrancar.
 | **launchbox** | `POST /launchbox/single`, `/apply-one`, `/csv/parse`, `/match-rows`, `/bulk`, `/apply-bulk`, `/apply-results-csv`, `GET /launchbox/bulk/:jobId`, `/bulk/:jobId/results`, `POST /launchbox/bulk/:jobId/cancel` |
 | **images** | `POST /images/search` |
 | **wiki** | `GET/POST /wiki/pages`, `GET/PATCH/DELETE /wiki/pages/:id`, `GET /wiki/categories`, `POST /wiki/categories/banner`, `GET /wiki/stats` |
-| **shopping** | `GET/POST /shopping/contexts`, `PATCH/DELETE /shopping/contexts/:id`, `GET /shopping/contexts/:id/items`, `POST /shopping/contexts/:id/links`, `POST /shopping/contexts/:id/refresh`, `DELETE /shopping/contexts/:id/inactive` |
+| **shopping** | `GET/POST /shopping/contexts`, `PATCH/DELETE /shopping/contexts/:id`, `GET /shopping/contexts/:id/items`, `DELETE /shopping/contexts/:contextId/items/:itemId`, `POST /shopping/contexts/:id/links`, `POST /shopping/contexts/:id/refresh`, `DELETE /shopping/contexts/:id/inactive` |
 | **sites** | `GET/POST /sites/contexts`, `PATCH/DELETE /sites/contexts/:id`, `GET/POST /sites/contexts/:id/pages`, `POST /sites/pages/:id/capture`, `DELETE /sites/pages/:id` |
 | **hijitos** | `GET /hijitos`, `GET/PUT /hijitos/banner`, `PATCH /hijitos/tracks/:slug`, `POST /hijitos/tasks`, `PATCH/DELETE /hijitos/tasks/:id`, `POST /hijitos/tasks/:id/subtasks`, `PATCH/DELETE /hijitos/subtasks/:id` |
 | **accounts** | `GET/POST /accounts`, `PUT /accounts/reorder`, `GET/PATCH/DELETE /accounts/:id`, `GET /accounts/:id/registers`, `GET /accounts/:id/years`, `GET /accounts/:id/monthly`, `POST /accounts/registers`, `PATCH/DELETE /accounts/registers/:id` |
